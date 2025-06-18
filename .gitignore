@@ -1,0 +1,32 @@
+# 🔒 Environment files
+.env
+.env.local
+.env.*.local
+
+# 📦 Node dependencies
+node_modules/
+
+# 🚀 Build output
+dist/
+build/
+.next/
+out/
+
+# 🛠 Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 💻 System files
+.DS_Store
+Thumbs.db
+
+# 📄 IDEs/editors
+.vscode/
+.idea/
+
+# 🚫 Lock files (optional – if you only use one package manager)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

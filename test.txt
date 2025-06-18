@@ -1,0 +1,17 @@
+// const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// const GEMINI_API_KEY = "AIzaSyCP-rWtbHQyVHl60ZHFvWSnpBrseUn9pQg";
+
+// const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+// async function init() {
+//   const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+//   const result = await model.generateContent("Hey how are you");
+//   const response = await result.response;
+
+//   console.log(response.text());
+// }
+
+// init();
+
+this is the code for google gemini ai
