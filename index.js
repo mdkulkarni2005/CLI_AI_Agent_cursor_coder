@@ -2,6 +2,8 @@ import { OpenAI } from "openai/client.js";
 import { exec } from "node:child_process";
 import 'dotenv/config';
 import readline from "readline";
+import chalk from "chalk";
+import ora from "ora";
 
 const OPENAI_API_KEY = process.env.OPENAI_KEY;
 
@@ -75,7 +77,7 @@ async function main() {
     output: process.stdout
   });
 
-  rl.question("How may I help you? ", async (userQuery) => {
+  rl.question(chalk.cyan.bold("How may I help you? "), async (userQuery) => {
     rl.close();
     const messages = [
       {
@@ -86,11 +88,13 @@ async function main() {
     ];
 
     while (true) {
+      const spinner = ora({ text: chalk.yellow("Thinking..."), spinner: "dots" }).start();
       const response = await client.chat.completions.create({
         model: "gpt-4.1",
         response_format: { type: "json_object" },
         messages: messages,
       });
+      spinner.stop();
       messages.push({
         role: "assistant",
         content: response.choices[0].message.content,
@@ -98,20 +102,20 @@ async function main() {
       const parsed_response = JSON.parse(response.choices[0].message.content);
 
       if (parsed_response.step && parsed_response.step === "think") {
-        console.log(`AI: ${parsed_response.content}`);
+        console.log(chalk.blueBright.bold("AI:") + " " + chalk.blue(parsed_response.content));
         continue;
       }
       if (parsed_response.step && parsed_response.step === "output") {
-        console.log(`BOT: ${parsed_response.content}`);
+        console.log(chalk.greenBright.bold("BOT:") + " " + chalk.green(parsed_response.content));
         break;
       }
       if (parsed_response.step && parsed_response.step === "action") {
         const tool = parsed_response.tool;
         const input = parsed_response.input;
-
+        const toolSpinner = ora({ text: chalk.magenta(`Running tool: ${tool}...`), spinner: "dots" }).start();
         const value = await TOOLS_MAP[tool](input);
-        console.log(`Tool Call: ${tool}: (${input}): (${value})`);
-
+        toolSpinner.succeed(chalk.magenta(`Tool Call: ${tool}: (${input})`));
+        console.log(chalk.gray(value));
         messages.push({
           role: "assistant",
           content: JSON.stringify({ step: "observe", content: value }),
