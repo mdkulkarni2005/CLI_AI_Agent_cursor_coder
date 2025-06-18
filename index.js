@@ -1,6 +1,7 @@
 import { OpenAI } from "openai/client.js";
 import { exec } from "node:child_process";
 import 'dotenv/config';
+import readline from "readline";
 
 const OPENAI_API_KEY = process.env.OPENAI_KEY;
 
@@ -27,7 +28,7 @@ const TOOLS_MAP = {
 };
 
 const SYSTEM_PROMPT = `
-    you are an helfull AI assistant who is designed to resolve user query.
+    you are an helful AI assistant who is designed to resolve user query.
     you work on START, THINK, ACTION, OBSERVE and OUTPUT Mode.
 
     in start phase, user gives a query to you.
@@ -68,51 +69,57 @@ const SYSTEM_PROMPT = `
     {"step": "string", "tool": "string", "input": "string", "content": "string"}
 `;
 
-async function init() {
-  const messages = [
-    {
-      role: "system",
-      content: SYSTEM_PROMPT,
-    },
-  ];
+async function main() {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
 
-  const userQuery = "What is in my package.json file";
-  messages.push({ role: "user", content: userQuery });
+  rl.question("How may I help you? ", async (userQuery) => {
+    rl.close();
+    const messages = [
+      {
+        role: "system",
+        content: SYSTEM_PROMPT,
+      },
+      { role: "user", content: userQuery }
+    ];
 
-  while (true) {
-    const response = await client.chat.completions.create({
-      model: "gpt-4.1",
-      response_format: { type: "json_object" },
-      messages: messages,
-    });
-    messages.push({
-      role: "assistant",
-      content: response.choices[0].message.content,
-    });
-    const parsed_response = JSON.parse(response.choices[0].message.content);
-
-    if (parsed_response.step && parsed_response.step === "think") {
-      console.log(`AI: ${parsed_response.content}`);
-      continue;
-    }
-    if (parsed_response.step && parsed_response.step === "output") {
-      console.log(`BOT: ${parsed_response.content}`);
-      break;
-    }
-    if (parsed_response.step && parsed_response.step === "action") {
-      const tool = parsed_response.tool;
-      const input = parsed_response.input;
-
-      const value = await TOOLS_MAP[tool](input);
-      console.log(`Tool Call: ${tool}: (${input}): (${value})`);
-
+    while (true) {
+      const response = await client.chat.completions.create({
+        model: "gpt-4.1",
+        response_format: { type: "json_object" },
+        messages: messages,
+      });
       messages.push({
         role: "assistant",
-        content: JSON.stringify({ step: "observe", content: value }),
+        content: response.choices[0].message.content,
       });
+      const parsed_response = JSON.parse(response.choices[0].message.content);
+
+      if (parsed_response.step && parsed_response.step === "think") {
+        console.log(`AI: ${parsed_response.content}`);
+        continue;
+      }
+      if (parsed_response.step && parsed_response.step === "output") {
+        console.log(`BOT: ${parsed_response.content}`);
+        break;
+      }
+      if (parsed_response.step && parsed_response.step === "action") {
+        const tool = parsed_response.tool;
+        const input = parsed_response.input;
+
+        const value = await TOOLS_MAP[tool](input);
+        console.log(`Tool Call: ${tool}: (${input}): (${value})`);
+
+        messages.push({
+          role: "assistant",
+          content: JSON.stringify({ step: "observe", content: value }),
+        });
+      }
+      continue;
     }
-    continue;
-  }
+  });
 }
 
-init();
+main();
